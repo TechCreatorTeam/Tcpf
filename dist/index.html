@@ -192,17 +192,164 @@
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portfolio and Project Marketplace Website</title>
-    <script type="module" crossorigin src="/assets/index-CavCPdaC.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BTb7aWQ1.css">
+    <title>TechCreator</title>
+    <style>
+      /* Loader overlay styles */
+      #palette-loader {
+        position: fixed;
+        inset: 0;
+        /* Gradient background */
+        background: linear-gradient(180deg, #fcb69f 0%, #a1c4fd 100%);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s;
+      }
+      .loader-card {
+        background: #fff;
+        border-radius: 1.2rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+        padding: 0;
+        min-width: 340px;
+        max-width: 95vw;
+        width: 420px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: none;
+        position: relative;
+      }
+      .loader-header-graphic {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(180deg, #b16cea 0%, #ff5e62 100%);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        position: relative;
+      }
+      .loader-header-graphic svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .loader-brand-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 3;
+        padding: 1.2rem 2rem 0.2rem 2rem;
+        position: static;
+      }
+      .loader-logo {
+        width: 32px;
+        height: 32px;
+      }
+      .loader-brand {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.01em;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.13);
+      }
+      .loader-content {
+        padding: 2.2rem 2rem 1.5rem 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #fff;
+      }
+      .loader-welcome {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #b16cea;
+        margin-bottom: 0.5rem;
+        margin-top: 0.2rem;
+        letter-spacing: 0.01em;
+      }
+      .loader-desc {
+        font-size: 1.05rem;
+        color: #444;
+        margin-bottom: 1.2rem;
+        text-align: center;
+        opacity: 0.85;
+        max-width: 320px;
+      }
+      .loader-spinner {
+        margin: 1.2rem auto 0 auto;
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e0c3fc;
+        border-top: 3px solid #b16cea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        100% { transform: rotate(360deg); }
+      }
+      @media (max-width: 480px) {
+        .loader-card { min-width: 98vw; width: 99vw; }
+        .loader-content { padding: 1.2rem 0.5rem 1rem 0.5rem; }
+        .loader-welcome { font-size: 1.2rem; }
+        .loader-brand-row { left: 10px; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CfvX9RHC.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CciOtMuU.css">
   </head>
   <body>
+    <!-- TechCreator brand only visible with loader, not on other pages -->
+    <div id="loader-brand-bar" style="position:fixed;top:0;left:0;display:flex;align-items:center;gap:0.5rem;padding:1.2rem 2rem 0.2rem 2rem;z-index:10000;">
+      <img src="/angular-brackets.svg" class="loader-logo" alt="TechCreator Logo" />
+      <div class="loader-brand" style="color:#b16cea;text-shadow:none;">TechCreator</div>
+    </div>
     <!-- Loader shown until palette is fetched and applied -->
-    <div id="palette-loader" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
-      <!-- <span style="font-size:1.2rem;color:#b45309;">Loading theme...</span> -->
-      <span style="font-size:1.2rem;color:#f01212;">Welcome!</span>
+    <div id="palette-loader">
+      <div class="loader-card">
+        <!-- Simple SVG landscape header -->
+        <div class="loader-header-graphic">
+          <svg viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="120" gradientUnits="userSpaceOnUse"/>
+              <linearGradient id="mountain" x1="0" y1="60" x2="0" y2="120" gradientUnits="userSpaceOnUse"/>
+            </defs>
+            <rect width="420" height="120" fill="url(#sky)" />
+            <ellipse cx="70" cy="80" rx="18" ry="18" fill="#ffe5b4" opacity="0.7"/>
+            <path d="M0 120 Q 60 80 120 120 T 240 120 T 360 120 T 420 120 V120 H0Z" fill="url(#mountain)" />
+            <path d="M40 120 Q 60 100 80 120" stroke="#23213a" stroke-width="4"/>
+            <rect x="30" y="100" width="6" height="20" fill="#23213a"/>
+            <polygon points="33,100 36,90 39,100" fill="#23213a"/>
+            <rect x="370" y="100" width="6" height="20" fill="#23213a"/>
+            <polygon points="373,100 376,90 379,100" fill="#23213a"/>
+          </svg>
+        </div>
+        <div class="loader-content">
+          <div class="loader-welcome">Welcome to TechCreator</div>
+          <div class="loader-desc">Your one-stop solution for all tech needs. Let's get started!</div>
+          <div class="loader-spinner"></div>
+        </div>
+      </div>
     </div>
     <!-- App root is hidden until palette is ready -->
     <div id="root" style="display:none" aria-hidden="true"></div>
+    <script>
+      // Hide loader and brand bar and show app root after palette is applied and React is ready
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          var loader = document.getElementById('palette-loader');
+          var root = document.getElementById('root');
+          var brandBar = document.getElementById('loader-brand-bar');
+          if (loader && root) {
+            loader.style.display = 'none';
+            root.style.display = '';
+            root.removeAttribute('aria-hidden');
+          }
+          if (brandBar) {
+            brandBar.style.display = 'none';
+          }
+        }, 300); // Delay to ensure palette is applied, adjust as needed
+      });
+    </script>
   </body>
 </html>
