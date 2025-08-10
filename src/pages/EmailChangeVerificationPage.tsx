@@ -97,20 +97,11 @@ const EmailChangeVerificationPage = () => {
 
         if (data.user) {
           console.log('✅ Email verification successful:', data.user.email);
-          // Retrieve old email from localStorage (set before initiating email change)
-          let oldEmail = '';
-          try {
-            oldEmail = localStorage.getItem('old_email') || '';
-            // Clean up after use
-            localStorage.removeItem('old_email');
-          } catch (e) {
-            console.warn('Could not access localStorage for old_email:', e);
-          }
           // Insert audit record
           try {
             await insertEmailChangeAudit({
               user_id: data.user.id,
-              old_email: oldEmail,
+              old_email: email ? decodeURIComponent(email) : '',
               new_email: data.user.email,
               changed_at: new Date().toISOString(),
               ip_address: null, // Optionally, you can fetch the user's IP address from your backend if needed
