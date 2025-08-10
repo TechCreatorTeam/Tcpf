@@ -30,7 +30,9 @@ const EmailChangeVerificationPage = () => {
     }
   };
   useEffect(() => {
-    const verifyEmailChange = async () => {
+  // Retrieve old email from localStorage (set before initiating email change)
+  const storedOldEmail = localStorage.getItem('old_email_for_change') || '';
+  const verifyEmailChange = async () => {
       try {
         // Get parameters from URL
         const token = searchParams.get('token') || searchParams.get('token_hash');
@@ -101,13 +103,15 @@ const EmailChangeVerificationPage = () => {
           try {
             await insertEmailChangeAudit({
               user_id: data.user.id,
-              old_email: email ? decodeURIComponent(email) : '',
+              old_email: storedOldEmail,
               new_email: data.user.email,
               changed_at: new Date().toISOString(),
               ip_address: null, // Optionally, you can fetch the user's IP address from your backend if needed
               user_agent: navigator.userAgent || ''
             });
             console.log('📋 Email change audit record inserted');
+            // Clean up old email from storage after use
+            localStorage.removeItem('old_email_for_change');
           } catch (auditError: any) {
             console.error('❌ Failed to insert email change audit record:', auditError);
             alert('Failed to insert email change audit record: ' + (auditError?.message || auditError));
