@@ -17,7 +17,7 @@ export async function insertEmailChangeAudit({
   const { data, error } = await supabase
     .from('email_change_audit')
     .insert([
-      { user_id, old_email, new_email, changed_at, ip_address: ip_address || null }
+      { user_id, old_email, new_email, changed_at, ip_address }
     ]);
   if (error) throw error;
   return data;
