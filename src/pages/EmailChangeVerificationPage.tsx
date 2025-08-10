@@ -104,7 +104,7 @@ const EmailChangeVerificationPage = () => {
               old_email: email ? decodeURIComponent(email) : '',
               new_email: data.user.email,
               changed_at: new Date().toISOString(),
-              ip_address: '', // Optionally, you can fetch the user's IP address from your backend if needed
+              ip_address: null, // Optionally, you can fetch the user's IP address from your backend if needed
               user_agent: navigator.userAgent || ''
             });
             console.log('📋 Email change audit record inserted');
