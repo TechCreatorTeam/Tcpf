@@ -84,7 +84,7 @@ const EmailChangeVerificationPage = () => {
           // Handle specific error cases
           if (error.message.includes('expired')) {
             setStatus('error');
-            setMessage('The verification link has expired (10 minutes). Please request a new email change from your admin settings.');
+            setMessage('The verification link has expired (24 hours). Please request a new email change from your admin settings.');
           } else if (error.message.includes('invalid') || error.message.includes('not found')) {
             setStatus('error');
             setMessage('Invalid verification link. The link may have already been used or is incorrect.');
