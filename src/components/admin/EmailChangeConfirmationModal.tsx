@@ -99,7 +99,7 @@ const EmailChangeConfirmationModal: React.FC<EmailChangeConfirmationModalProps> 
                 </li>
                 <li className="flex items-start">
                   <Clock className="h-4 w-4 text-amber-500 mr-2 mt-0.5" />
-                  <span>The verification link expires in <strong>10 minutes</strong>. Click it to complete the email change and trigger the security logout.</span>
+                  <span>The verification link expires in <strong>24 hours</strong>. Click it to complete the email change and trigger the security logout.</span>
                 </li>
               </ul>
             </div>

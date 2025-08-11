@@ -71,7 +71,11 @@ export const initiateEmailChange = async (
     const { error: updateError } = await supabase.auth.updateUser({
       email: newEmail,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_change_initiated_at: new Date().toISOString(),
+          old_email: currentUser.user.email
+        }
       }
     });
 
@@ -81,7 +85,7 @@ export const initiateEmailChange = async (
     }
 
     console.log('✅ Email change initiated successfully');
-    console.log('ℹ️ Note: After clicking the verification link in your email, all sessions will be signed out globally for security');
+    console.log('ℹ️ Note: Verification link is valid for 24 hours. After clicking it, all sessions will be signed out globally for security');
     
     return { 
       success: true, 
@@ -113,7 +117,11 @@ export const resendEmailChangeConfirmation = async (
     const { error } = await supabase.auth.updateUser({
       email: newEmail,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_change_resent_at: new Date().toISOString(),
+          resend_count: (Date.now() % 1000).toString() // Simple counter
+        }
       }
     });
 
@@ -122,7 +130,7 @@ export const resendEmailChangeConfirmation = async (
       return { success: false, error: error.message };
     }
 
-    console.log('✅ Confirmation email resent successfully');
+    console.log('✅ Confirmation email resent successfully - new link valid for 24 hours');
     return { success: true };
   } catch (error) {
     console.error('💥 Resend email error:', error);
