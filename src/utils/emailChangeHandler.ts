@@ -97,27 +97,33 @@ export const resendEmailChangeConfirmation = async (
     console.log('🔄 Resending email change confirmation...');
     console.log('📧 Email:', newEmail);
     
-    const redirectUrl = `${window.location.origin}/admin/login/verify-email-change`;
-    console.log('🔗 Redirect URL:', redirectUrl);
-    
-    // Re-trigger the email change to resend confirmation
-    const { error } = await supabase.auth.updateUser({
-      email: newEmail,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          email_change_resent_at: new Date().toISOString(),
-          resend_count: (Date.now() % 1000).toString() // Simple counter
-        }
-      }
-    });
-
-    if (error) {
-      console.log('❌ Resend failed:', error.message);
-      return { success: false, error: error.message };
+    const { data: currentUser } = await supabase.auth.getUser();
+    if (!currentUser.user) {
+      return { success: false, error: 'No user logged in' };
     }
 
-    console.log('✅ Confirmation email resent successfully - new link valid for 24 hours');
+    // Use edge function for resending
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/initiate-email-change`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        newEmail,
+        currentPassword: 'resend', // Special flag for resend
+        userId: currentUser.user.id,
+        isResend: true
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    console.log('✅ Confirmation email resent successfully');
     return { success: true };
   } catch (error) {
     console.error('💥 Resend email error:', error);
