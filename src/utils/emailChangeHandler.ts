@@ -42,6 +42,7 @@ export const initiateEmailChange = async (
     console.log('🔄 Initiating email change process...');
     console.log('📧 New email:', newEmail);
     
+    // First verify the current password by attempting to sign in
     const { data: currentUser } = await supabase.auth.getUser();
     if (!currentUser.user?.email) {
       console.log('❌ No user logged in');
@@ -50,29 +51,41 @@ export const initiateEmailChange = async (
 
     console.log('👤 Current user email:', currentUser.user.email);
 
-    // Use edge function for better reliability
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/initiate-email-change`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        newEmail,
-        currentPassword,
-        userId: currentUser.user.id
-      })
+    // Verify current password
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: currentUser.user.email,
+      password: currentPassword,
     });
 
-    const result = await response.json();
+    if (verifyError) {
+      console.log('❌ Password verification failed:', verifyError.message);
+      return { success: false, error: 'Current password is incorrect' };
+    }
 
-    if (!result.success) {
-      console.log('❌ Email change failed:', result.error);
-      return { success: false, error: result.error };
+    console.log('✅ Password verified, updating email...');
+
+    // Initiate email change with redirect URL
+    const redirectUrl = `${window.location.origin}/admin/login/verify-email-change`;
+    console.log('🔗 Redirect URL:', redirectUrl);
+    
+    const { error: updateError } = await supabase.auth.updateUser({
+      email: newEmail,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_change_initiated_at: new Date().toISOString(),
+          old_email: currentUser.user.email
+        }
+      }
+    });
+
+    if (updateError) {
+      console.log('❌ Email update failed:', updateError.message);
+      return { success: false, error: updateError.message };
     }
 
     console.log('✅ Email change initiated successfully');
-    console.log('ℹ️ Note: Verification link is valid for 24 hours');
+    console.log('ℹ️ Note: Verification link is valid for 24 hours. After clicking it, all sessions will be signed out globally for security');
     
     return { 
       success: true, 
@@ -97,33 +110,27 @@ export const resendEmailChangeConfirmation = async (
     console.log('🔄 Resending email change confirmation...');
     console.log('📧 Email:', newEmail);
     
-    const { data: currentUser } = await supabase.auth.getUser();
-    if (!currentUser.user) {
-      return { success: false, error: 'No user logged in' };
-    }
-
-    // Use edge function for resending
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/initiate-email-change`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        newEmail,
-        currentPassword: 'resend', // Special flag for resend
-        userId: currentUser.user.id,
-        isResend: true
-      })
+    const redirectUrl = `${window.location.origin}/admin/login/verify-email-change`;
+    console.log('🔗 Redirect URL:', redirectUrl);
+    
+    // Re-trigger the email change to resend confirmation
+    const { error } = await supabase.auth.updateUser({
+      email: newEmail,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_change_resent_at: new Date().toISOString(),
+          resend_count: (Date.now() % 1000).toString() // Simple counter
+        }
+      }
     });
 
-    const result = await response.json();
-
-    if (!result.success) {
-      return { success: false, error: result.error };
+    if (error) {
+      console.log('❌ Resend failed:', error.message);
+      return { success: false, error: error.message };
     }
 
-    console.log('✅ Confirmation email resent successfully');
+    console.log('✅ Confirmation email resent successfully - new link valid for 24 hours');
     return { success: true };
   } catch (error) {
     console.error('💥 Resend email error:', error);

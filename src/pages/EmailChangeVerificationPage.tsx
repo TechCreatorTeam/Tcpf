@@ -32,19 +32,116 @@ const EmailChangeVerificationPage = () => {
   useEffect(() => {
     const verifyEmailChange = async () => {
       try {
-        // Use edge function for verification
-        const currentUrl = window.location.href;
-        const verificationUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/handle-email-verification${window.location.search}`;
+        // Get parameters from URL
+        const token = searchParams.get('token') || searchParams.get('token_hash');
+        const email = searchParams.get('email');
+        const type = searchParams.get('type') || 'email_change';
         
-        console.log('🔗 Redirecting to verification handler:', verificationUrl);
+        console.log('🔍 Email verification parameters:', {
+          token: token ? `${token.substring(0, 8)}...` : 'missing',
+          email: email ? decodeURIComponent(email) : 'missing',
+          type,
+          fullUrl: window.location.href
+        });
+
+        if (!token) {
+          setStatus('error');
+          setMessage('Invalid verification link. No verification token provided.');
+          return;
+        }
+
+        if (email) {
+          const decodedEmail = decodeURIComponent(email);
+          setNewEmail(decodedEmail);
+          console.log('📧 New email from URL:', decodedEmail);
+        }
+
+        // Try different verification methods based on the token format
+        let verificationResult;
         
-        // Redirect to the edge function which will handle verification and redirect back
-        window.location.href = verificationUrl;
-        
+        if (token.length === 6 && /^\d+$/.test(token)) {
+          // This looks like a 6-digit OTP token
+          console.log('🔢 Attempting OTP verification with 6-digit token');
+          verificationResult = await supabase.auth.verifyOtp({
+            token,
+            type: 'email_change' as any,
+            email: email ? decodeURIComponent(email) : undefined
+          });
+        } else {
+          // This looks like a hash token
+          console.log('🔗 Attempting hash token verification');
+          verificationResult = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'email_change' as any
+          });
+        }
+
+        const { data, error } = verificationResult;
+
+        if (error) {
+          console.error('❌ Email verification error:', error);
+          
+          // Handle specific error cases
+          if (error.message.includes('expired')) {
+            setStatus('error');
+            setMessage('The verification link has expired (24 hours). Please request a new email change from your admin settings.');
+          } else if (error.message.includes('invalid') || error.message.includes('not found')) {
+            setStatus('error');
+            setMessage('Invalid verification link. The link may have already been used or is incorrect.');
+          } else {
+            setStatus('error');
+            setMessage(`Verification failed: ${error.message}. Please try logging in with your new email address directly.`);
+          }
+          return;
+        }
+
+        if (data.user) {
+          console.log('✅ Email verification successful:', data.user.email);
+          // Insert audit record
+          try {
+            await insertEmailChangeAudit({
+              user_id: data.user.id,
+              old_email: email ? decodeURIComponent(email) : '',
+              new_email: data.user.email,
+              changed_at: new Date().toISOString(),
+              ip_address: null, // Optionally, you can fetch the user's IP address from your backend if needed
+              user_agent: navigator.userAgent || ''
+            });
+            console.log('📋 Email change audit record inserted');
+          } catch (auditError: any) {
+            console.error('❌ Failed to insert email change audit record:', auditError);
+            alert('Failed to insert email change audit record: ' + (auditError?.message || auditError));
+          }
+          // IMPORTANT: Now that email verification is successful, sign out all sessions across all devices
+          console.log('🔐 Email verification successful! Now signing out all sessions across all devices for security...');
+          await signOutAllSessions();
+          setStatus('success');
+          setMessage('Your email has been successfully verified and changed! For security, you have been signed out from all devices and browsers.');
+          setNewEmail(data.user.email || email ? decodeURIComponent(email) : '');
+          // Redirect to login page with success parameters (no auto-login)
+          setTimeout(() => {
+            navigate(`/admin/login?email_changed=1&new_email=${encodeURIComponent(data.user.email || email ? decodeURIComponent(email) : '')}`);
+          }, 3000);
+        } else {
+          console.log('⚠️ Verification completed but no user data returned');
+          
+          // Even if no user data, the verification was successful, so sign out all sessions
+          console.log('🔐 Email verification completed, signing out all sessions for security...');
+          await signOutAllSessions();
+          
+          setStatus('success'); // Still treat as success since verification went through
+          setMessage('Email verification completed successfully. For security, you have been signed out from all devices and browsers. Please log in with your new email address.');
+          
+          // Redirect to login page (no auto-login)
+          setTimeout(() => {
+            const redirectEmail = newEmail || (email ? decodeURIComponent(email) : '');
+            navigate(`/admin/login?email_changed=1${redirectEmail ? `&new_email=${encodeURIComponent(redirectEmail)}` : ''}`);
+          }, 3000);
+        }
       } catch (error) {
         console.error('💥 Verification error:', error);
         setStatus('error');
-        setMessage(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}. Please try logging in with your new email address.`);
+        setMessage(`An unexpected error occurred: ${error.message || 'Unknown error'}. Please try logging in with your new email address.`);
       }
     };
 
