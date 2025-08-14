@@ -69,7 +69,7 @@ const EmailChangeConfirmationModal: React.FC<EmailChangeConfirmationModalProps> 
                 <li>Click "Confirm your new email" in that email to complete the change.</li>
                 <li>After clicking the verification link, you'll be automatically signed out from all devices and browsers for security.</li>
                 <li>Return to the login page and use your new email address to sign in.</li>
-                <li>If the verification link doesn't work, try logging in with your new email directly.</li>
+                <li>The verification link is valid for 24 hours. If it expires, request a new email change.</li>
               </ol>
             </div>
 
@@ -99,7 +99,7 @@ const EmailChangeConfirmationModal: React.FC<EmailChangeConfirmationModalProps> 
                 </li>
                 <li className="flex items-start">
                   <Clock className="h-4 w-4 text-amber-500 mr-2 mt-0.5" />
-                  <span>The verification link expires in <strong>24 hours</strong>. Click it to complete the email change and trigger the security logout.</span>
+                  <span>The verification link is valid for <strong>24 hours</strong>. After that time, you'll need to request a new email change.</span>
                 </li>
               </ul>
             </div>

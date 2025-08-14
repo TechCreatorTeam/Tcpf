@@ -36,14 +36,32 @@ const EmailChangeVerificationPage = () => {
         const token = searchParams.get('token') || searchParams.get('token_hash');
         const email = searchParams.get('email');
         const type = searchParams.get('type') || 'email_change';
+        const error_code = searchParams.get('error_code');
+        const error_description = searchParams.get('error_description');
         
         console.log('🔍 Email verification parameters:', {
           token: token ? `${token.substring(0, 8)}...` : 'missing',
           email: email ? decodeURIComponent(email) : 'missing',
           type,
+          error_code,
+          error_description,
           fullUrl: window.location.href
         });
 
+        // Check for error parameters first
+        if (error_code || error_description) {
+          console.error('❌ URL contains error parameters:', { error_code, error_description });
+          setStatus('error');
+          
+          if (error_code === 'otp_expired') {
+            setMessage('The verification link has expired. Email verification links are valid for 24 hours. Please request a new email change from your admin settings.');
+          } else if (error_code === 'invalid_token') {
+            setMessage('Invalid verification token. The link may have been used already or is malformed.');
+          } else {
+            setMessage(`Verification failed: ${error_description || error_code || 'Unknown error'}. Please try requesting a new email change.`);
+          }
+          return;
+        }
         if (!token) {
           setStatus('error');
           setMessage('Invalid verification link. No verification token provided.');
@@ -56,25 +74,18 @@ const EmailChangeVerificationPage = () => {
           console.log('📧 New email from URL:', decodedEmail);
         }
 
-        // Try different verification methods based on the token format
+        // Enhanced verification with better error handling
         let verificationResult;
         
-        if (token.length === 6 && /^\d+$/.test(token)) {
-          // This looks like a 6-digit OTP token
-          console.log('🔢 Attempting OTP verification with 6-digit token');
-          verificationResult = await supabase.auth.verifyOtp({
-            token,
-            type: 'email_change' as any,
-            email: email ? decodeURIComponent(email) : undefined
-          });
-        } else {
-          // This looks like a hash token
-          console.log('🔗 Attempting hash token verification');
-          verificationResult = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'email_change' as any
-          });
-        }
+        console.log('🔗 Attempting email change verification...');
+        console.log('🎫 Token length:', token.length);
+        console.log('🎫 Token format:', /^\d+$/.test(token) ? 'numeric' : 'hash');
+        
+        // Use the most reliable verification method
+        verificationResult = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'email_change' as any
+        });
 
         const { data, error } = verificationResult;
 
@@ -84,13 +95,13 @@ const EmailChangeVerificationPage = () => {
           // Handle specific error cases
           if (error.message.includes('expired')) {
             setStatus('error');
-            setMessage('The verification link has expired (24 hours). Please request a new email change from your admin settings.');
+            setMessage('The verification link has expired or is invalid. Email verification links are valid for 24 hours from when they were sent. Please request a new email change from your admin settings.');
           } else if (error.message.includes('invalid') || error.message.includes('not found')) {
             setStatus('error');
-            setMessage('Invalid verification link. The link may have already been used or is incorrect.');
+            setMessage('Invalid verification link. The link may have already been used, is malformed, or the token has expired. Please request a new email change.');
           } else {
             setStatus('error');
-            setMessage(`Verification failed: ${error.message}. Please try logging in with your new email address directly.`);
+            setMessage(`Verification failed: ${error.message}. Please try requesting a new email change from your admin settings or contact support if the issue persists.`);
           }
           return;
         }

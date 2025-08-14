@@ -64,8 +64,11 @@ export const initiateEmailChange = async (
 
     console.log('✅ Password verified, updating email...');
 
-    // Initiate email change with redirect URL
-    const redirectUrl = `${window.location.origin}/admin/login/verify-email-change`;
+    // Initiate email change with production redirect URL
+    const baseUrl = window.location.origin.includes('localhost') 
+      ? 'https://quiet-nougat-f9de42.netlify.app' 
+      : window.location.origin;
+    const redirectUrl = `${baseUrl}/admin/login/verify-email-change`;
     console.log('🔗 Redirect URL:', redirectUrl);
     
     const { error: updateError } = await supabase.auth.updateUser({
@@ -74,7 +77,10 @@ export const initiateEmailChange = async (
         emailRedirectTo: redirectUrl,
         data: {
           email_change_initiated_at: new Date().toISOString(),
-          old_email: currentUser.user.email
+          old_email: currentUser.user.email,
+          redirect_url: redirectUrl,
+          user_agent: navigator.userAgent,
+          timestamp: Date.now().toString()
         }
       }
     });
@@ -85,6 +91,7 @@ export const initiateEmailChange = async (
     }
 
     console.log('✅ Email change initiated successfully');
+    console.log('🔗 Verification email sent with redirect URL:', redirectUrl);
     console.log('ℹ️ Note: Verification link is valid for 24 hours. After clicking it, all sessions will be signed out globally for security');
     
     return { 
@@ -110,7 +117,11 @@ export const resendEmailChangeConfirmation = async (
     console.log('🔄 Resending email change confirmation...');
     console.log('📧 Email:', newEmail);
     
-    const redirectUrl = `${window.location.origin}/admin/login/verify-email-change`;
+    // Use production URL for consistency
+    const baseUrl = window.location.origin.includes('localhost') 
+      ? 'https://quiet-nougat-f9de42.netlify.app' 
+      : window.location.origin;
+    const redirectUrl = `${baseUrl}/admin/login/verify-email-change`;
     console.log('🔗 Redirect URL:', redirectUrl);
     
     // Re-trigger the email change to resend confirmation
@@ -120,7 +131,10 @@ export const resendEmailChangeConfirmation = async (
         emailRedirectTo: redirectUrl,
         data: {
           email_change_resent_at: new Date().toISOString(),
-          resend_count: (Date.now() % 1000).toString() // Simple counter
+          resend_count: (Date.now() % 1000).toString(),
+          redirect_url: redirectUrl,
+          user_agent: navigator.userAgent,
+          resend_timestamp: Date.now().toString()
         }
       }
     });
@@ -130,7 +144,9 @@ export const resendEmailChangeConfirmation = async (
       return { success: false, error: error.message };
     }
 
-    console.log('✅ Confirmation email resent successfully - new link valid for 24 hours');
+    console.log('✅ Confirmation email resent successfully');
+    console.log('🔗 New verification link sent to:', newEmail);
+    console.log('⏰ Link valid for 24 hours');
     return { success: true };
   } catch (error) {
     console.error('💥 Resend email error:', error);
